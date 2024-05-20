@@ -27,6 +27,8 @@ namespace Amazone.Apis.Extentions
 
             services.AddScoped(typeof(IOrderServiece), typeof(OrderService));
 
+            services.AddScoped(typeof(IProductServices), typeof(ProductServices));
+
             services.AddAutoMapper(typeof(MappingProfile));
 
 

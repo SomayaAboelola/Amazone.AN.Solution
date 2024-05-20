@@ -38,7 +38,14 @@ namespace Amazone.Apis
 
             builder.Services.AddAuthenticationService(builder.Configuration);
 
+            builder.Services.AddCors(async options =>
+            {
+                options.AddPolicy("MyPolicy", policyOptions =>
+                {
 
+                    policyOptions.AllowAnyHeader().AllowAnyMethod().WithOrigins(builder.Configuration["FrontBaseUrl"]);
+                });
+            });
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddSwaggerService();
 
@@ -63,14 +70,16 @@ namespace Amazone.Apis
 
             app.UseStaticFiles();
 
+            app.UseCors("MyPolicy");
+
+            app.MapControllers();
+
             app.UseAuthentication();
 
             app.UseAuthorization();
 
-
-            app.MapControllers();
-
             app.Run();
+
         }
     }
 }

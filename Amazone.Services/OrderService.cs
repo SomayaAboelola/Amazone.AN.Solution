@@ -10,17 +10,22 @@ namespace Amazone.Services
     public class OrderService : IOrderServiece
     {
         private readonly IBasketRepository _basket;
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly IUnitOfWork _unitOfWork; 
+        private readonly IPaymentServices _paymentServices;
        
 
         public OrderService(IBasketRepository basket,
-                            IUnitOfWork unitOfWork )
+                            IUnitOfWork unitOfWork ,
+                            IPaymentServices paymentServices)
 
           {
             _basket = basket;
             _unitOfWork = unitOfWork;
-           
-          }
+            _paymentServices = paymentServices;
+        }
+
+        public IPaymentServices PaymentServices { get; }
+
         public async Task<Order?> CreateOrderAsync(string basketId, int deliveryMethodId, string BuyerEmail, Address ShippingAddress)
         {
             //1.Get BasketId from Basket Services
@@ -50,6 +55,22 @@ namespace Amazone.Services
             //4.Get DeliveryMethod from DeliveryMethodRepo
             var DeliveryMethod = await _unitOfWork.Repository<DeliveryMethod, int>().GetAsync(deliveryMethodId);
 
+            //Check if Order Create With same Payment Intent Id
+
+            var orderRepo = _unitOfWork.Repository<Order, int>();
+
+            var spec = new OrderWithPaymentSpecification(basketId);
+            var existingOrder = await orderRepo.GetwihSpecAsync(spec) ;
+
+            if (existingOrder is not null) 
+            { 
+                orderRepo.Delete(existingOrder) ;  
+                
+                //Check Payment =>Amount => new Order
+                await _paymentServices.CrateOrUpdatePaymentIntent(basketId) ;
+            }
+
+
             //5.Create Oder 
 
             var order = new Order(
@@ -57,9 +78,12 @@ namespace Amazone.Services
                 shippingAddress: ShippingAddress,
                 deliveryMethod: DeliveryMethod,
                 items: OrderItems,
-                subtotal: subTotal);
+                subtotal: subTotal,
+                paymentIntentId:basket?.PaymentIntentId ?? ""         
+                
+                );
 
-            _unitOfWork.Repository<Order, int>().Add(order);
+            orderRepo.Add(order);
 
             //6.Save Database 
             var result = await _unitOfWork.CompleteAsync();
