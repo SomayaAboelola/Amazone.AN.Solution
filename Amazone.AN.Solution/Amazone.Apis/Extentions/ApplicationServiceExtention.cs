@@ -17,11 +17,7 @@ namespace Amazone.Apis.Extentions
     {
         public static IServiceCollection AddApplicationService(this IServiceCollection services)
         {
-
-
-            //services.AddScoped<IGenericRepository<Product, int>, GenericRepository<Product, int>>();
-            //services.AddScoped<IGenericRepository<ProductBrand, int>, GenericRepository<ProductBrand, int>>();
-            //services.AddScoped<IGenericRepository<ProductType, int>, GenericRepository<ProductType, int>>();
+            services.AddScoped(typeof(IPaymentServices), typeof(PaymentServices));
 
             services.AddScoped(typeof(IUnitOfWork), typeof(UnitOfWork));
 
