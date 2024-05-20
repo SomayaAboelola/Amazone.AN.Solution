@@ -10,7 +10,7 @@ namespace Amazone.Repository.Context
         {
             if (context.ProductBrands.Count() == 0)
             {
-                var brandData = File.ReadAllText(@"E:\ROUTE\06 API\ProjectApi\API\Amazone.Repository\_Data\SeedData\brands.json");
+                var brandData = File.ReadAllText(@"E:\ROUTE\06 API\ProjectApi\API\Amazone.Repository\_Data\SeedData\brand.json");
                 var brand = JsonSerializer.Deserialize<List<ProductBrand>>(brandData);
                 if (brand?.Count > 0)
                 {
@@ -21,7 +21,7 @@ namespace Amazone.Repository.Context
 
             if (context.ProductTypes.Count() == 0)
             {
-                var typeData = File.ReadAllText(@"E:\ROUTE\06 API\ProjectApi\API\Amazone.Repository\_Data\SeedData\types.json");
+                var typeData = File.ReadAllText(@"E:\ROUTE\06 API\ProjectApi\API\Amazone.Repository\_Data\SeedData\type.json");
                 var type = JsonSerializer.Deserialize<List<ProductType>>(typeData);
                 if (type?.Count > 0)
                 {
@@ -32,7 +32,7 @@ namespace Amazone.Repository.Context
 
             if (context.Products.Count() == 0)
             {
-                var productData = File.ReadAllText(@"E:\ROUTE\06 API\ProjectApi\API\Amazone.Repository\_Data\SeedData\products.json");
+                var productData = File.ReadAllText(@"E:\ROUTE\06 API\ProjectApi\API\Amazone.Repository\_Data\SeedData\product.json");
                 var products = JsonSerializer.Deserialize<List<Product>>(productData);
                 if (products?.Count > 0)
                 {
