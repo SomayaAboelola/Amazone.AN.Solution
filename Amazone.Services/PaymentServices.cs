@@ -1,12 +1,12 @@
 ﻿using Amazone.Core;
 using Amazone.Core.Entities.Basket;
+using Amazone.Core.Entities.Order_Aggregate;
 using Amazone.Core.Repositories.Contract;
 using Amazone.Core.Services.Contract;
-using Amazone.Core.Entities.Data;
+using Amazone.Core.Specification.OderSpec;
 using Microsoft.Extensions.Configuration;
 using Stripe;
 using Product = Amazone.Core.Entities.Data.Product;
-using Amazone.Core.Entities.Order_Aggregate;
 
 namespace Amazone.Services
 {
@@ -28,38 +28,38 @@ namespace Amazone.Services
         {
             StripeConfiguration.ApiKey = _configuration["StripeSetting:Secretkey"];
             var productRepo = _unitOfWork.Repository<Product, int>();
-            var basket =await _basketRepo.GetBasketAsync(basketId);
+            var basket = await _basketRepo.GetBasketAsync(basketId);
             if (basket == null) return null;
 
             var shippingprice = 0m;
 
-            if(basket.DeliveryMethodId.HasValue)
+            if (basket.DeliveryMethodId.HasValue)
             {
-                var deliveryMethod=await _unitOfWork.Repository<DeliveryMethod ,int>().GetAsync(basket.DeliveryMethodId.Value);
-                shippingprice= deliveryMethod.Price;
+                var deliveryMethod = await _unitOfWork.Repository<DeliveryMethod, int>().GetAsync(basket.DeliveryMethodId.Value);
+                shippingprice = deliveryMethod.Price;
             }
-            
-            if(basket.Items?.Count > 0)
+
+            if (basket.Items?.Count > 0)
             {
                 foreach (var item in basket.Items)
                 {
                     var product = await productRepo.GetAsync(item.Id);
-                  
+
                     if (item.Price != product.Price)
                         item.Price = product.Price;
                 }
             }
 
             PaymentIntent paymentIntent;
-           PaymentIntentService  paymentIntentService = new PaymentIntentService();
+            PaymentIntentService paymentIntentService = new PaymentIntentService();
 
-            if(string.IsNullOrEmpty(basket.PaymentIntentId))  // Create New Payment Intent 
+            if (string.IsNullOrEmpty(basket.PaymentIntentId))  // Create New Payment Intent 
             {
                 var option = new PaymentIntentCreateOptions()
                 {
                     Amount = (long)basket.Items.Sum(item => item.Price * item.Quantity * 100) + (long)shippingprice * 100,
                     Currency = "usd",
-                    PaymentMethodTypes=new List<string> {"card"}
+                    PaymentMethodTypes = new List<string> { "card" }
 
                 };
 
@@ -76,13 +76,32 @@ namespace Amazone.Services
                     Amount = (long)basket.Items.Sum(item => item.Price * item.Quantity * 100) + (long)shippingprice * 100,
 
                 };
-                await paymentIntentService.UpdateAsync(basket.PaymentIntentId ,option); 
+                await paymentIntentService.UpdateAsync(basket.PaymentIntentId, option);
 
             }
 
-            await _basketRepo.UpdateBasketAsync(basket); 
-            
+            await _basketRepo.UpdateBasketAsync(basket);
+
             return basket;
+        }
+
+        public async Task<Order?> UpdateOrderStatus(string paymentIntentId, bool isPaid)
+        {
+            var orderRepo = _unitOfWork.Repository<Order, int>();
+            var spec = new OrderWithPaymentSpecification(paymentIntentId);
+
+            var order = await orderRepo.GetwihSpecAsync(spec);
+
+            if (order is null) return null;
+
+            if (isPaid)
+                order.orderStatus = OrderStatus.Received;
+            else
+                order.orderStatus = OrderStatus.Failed;
+
+            orderRepo.Update(order);
+            await _unitOfWork.CompleteAsync();
+            return order;
         }
     }
 }

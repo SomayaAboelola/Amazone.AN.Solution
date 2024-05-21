@@ -13,7 +13,7 @@ namespace Amazone.Apis.Dtos.Basket
         [Required]
         public string Brand { get; set; }
         [Required]
-        public string Type { get; set; }
+        public string Category { get; set; }
         [Required]
         [Range(0.1, int.MaxValue, ErrorMessage = "Price must be greater than Zero !!")]
         public decimal Price { get; set; }
